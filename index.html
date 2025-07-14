@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Stopwatch & Timer</title>
+    <style>
+      body {
+        font-family: "Segoe UI", sans-serif;
+        background: linear-gradient(135deg, #74ebd5, #acb6e5);
+        margin: 0;
+        padding: 0;
+        display: flex;
+        height: 100vh;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        color: #333;
+      }
+
+      h1 {
+        margin-bottom: 20px;
+      }
+
+      .container {
+        background: #fff;
+        padding: 30px;
+        border-radius: 16px;
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+        text-align: center;
+        max-width: 300px;
+        width: 100%;
+      }
+
+      .time {
+        font-size: 3em;
+        margin-bottom: 20px;
+      }
+
+      button {
+        background-color: #3498db;
+        color: white;
+        border: none;
+        padding: 10px 16px;
+        margin: 5px;
+        border-radius: 8px;
+        font-size: 1em;
+        cursor: pointer;
+        transition: background 0.3s;
+      }
+
+      button:hover {
+        background-color: #2980b9;
+      }
+
+      input[type="number"] {
+        width: 60px;
+        padding: 5px;
+        margin-right: 5px;
+        text-align: center;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+      }
+
+      .mode-switch {
+        margin-top: 15px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Stopwatch & Timer</h1>
+    <div class="container">
+      <div class="time" id="display">00:00:00</div>
+
+      <div class="mode-switch">
+        <button onclick="switchMode()">Ganti ke Timer</button>
+      </div>
+
+      <div id="timerInput" style="display: none; margin-top: 10px">
+        <input type="number" id="minutes" placeholder="Menit" min="0" />
+        <input type="number" id="seconds" placeholder="Detik" min="0" />
+      </div>
+
+      <div style="margin-top: 10px">
+        <button onclick="start()">Mulai</button>
+        <button onclick="pause()">Jeda</button>
+        <button onclick="reset()">Reset</button>
+      </div>
+    </div>
+
+    <script>
+      let mode = "stopwatch"; // atau "timer"
+      let startTime,
+        interval,
+        elapsed = 0,
+        countdown = 0;
+
+      const display = document.getElementById("display");
+      const btnSwitch = document.querySelector(".mode-switch button");
+      const timerInput = document.getElementById("timerInput");
+
+      function formatTime(ms) {
+        const totalSec = Math.floor(ms / 1000);
+        const hrs = String(Math.floor(totalSec / 3600)).padStart(2, "0");
+        const mins = String(Math.floor((totalSec % 3600) / 60)).padStart(
+          2,
+          "0"
+        );
+        const secs = String(totalSec % 60).padStart(2, "0");
+        return `${hrs}:${mins}:${secs}`;
+      }
+
+      function updateDisplay(ms) {
+        display.textContent = formatTime(ms);
+      }
+
+      function start() {
+        if (interval) return;
+
+        if (mode === "stopwatch") {
+          startTime = Date.now() - elapsed;
+          interval = setInterval(() => {
+            elapsed = Date.now() - startTime;
+            updateDisplay(elapsed);
+          }, 100);
+        } else {
+          const m = parseInt(document.getElementById("minutes").value) || 0;
+          const s = parseInt(document.getElementById("seconds").value) || 0;
+          if (countdown === 0) countdown = (m * 60 + s) * 1000;
+          const endTime = Date.now() + countdown;
+
+          interval = setInterval(() => {
+            const remaining = endTime - Date.now();
+            if (remaining <= 0) {
+              clearInterval(interval);
+              interval = null;
+              countdown = 0;
+              updateDisplay(0);
+              alert("Waktu habis!");
+            } else {
+              countdown = remaining;
+              updateDisplay(remaining);
+            }
+          }, 100);
+        }
+      }
+
+      function pause() {
+        clearInterval(interval);
+        interval = null;
+      }
+
+      function reset() {
+        clearInterval(interval);
+        interval = null;
+        elapsed = 0;
+        countdown = 0;
+        updateDisplay(0);
+      }
+
+      function switchMode() {
+        reset();
+        if (mode === "stopwatch") {
+          mode = "timer";
+          btnSwitch.textContent = "Ganti ke Stopwatch";
+          timerInput.style.display = "block";
+        } else {
+          mode = "stopwatch";
+          btnSwitch.textContent = "Ganti ke Timer";
+          timerInput.style.display = "none";
+        }
+      }
+
+      updateDisplay(0); // Set awal ke 00:00:00
+    </script>
+  </body>
+</html>
