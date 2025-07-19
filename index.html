@@ -90,11 +90,21 @@
     </div>
 
     <script>
-      let mode = "stopwatch"; // atau "timer"
-      let startTime,
-        interval,
-        elapsed = 0,
-        countdown = 0;
+      let mode = "stopwatch";
+
+      let stopwatch = {
+        running: false,
+        startTime: 0,
+        elapsed: 0,
+        interval: null,
+      };
+
+      let timer = {
+        running: false,
+        endTime: 0,
+        duration: 0,
+        interval: null,
+      };
 
       const display = document.getElementById("display");
       const btnSwitch = document.querySelector(".mode-switch button");
@@ -116,60 +126,83 @@
       }
 
       function start() {
-        if (interval) return;
-
         if (mode === "stopwatch") {
-          startTime = Date.now() - elapsed;
-          interval = setInterval(() => {
-            elapsed = Date.now() - startTime;
-            updateDisplay(elapsed);
+          if (stopwatch.running) return;
+          stopwatch.running = true;
+          stopwatch.startTime = Date.now() - stopwatch.elapsed;
+          stopwatch.interval = setInterval(() => {
+            stopwatch.elapsed = Date.now() - stopwatch.startTime;
+            if (mode === "stopwatch") updateDisplay(stopwatch.elapsed);
           }, 100);
         } else {
-          const h = parseInt(document.getElementById("hours").value) || 0;
-          const m = parseInt(document.getElementById("minutes").value) || 0;
-          const s = parseInt(document.getElementById("seconds").value) || 0;
-          if (countdown === 0) countdown = (h * 3600 + m * 60 + s) * 1000;
-          const endTime = Date.now() + countdown;
+          if (timer.running) return;
 
-          interval = setInterval(() => {
-            const remaining = endTime - Date.now();
+          if (timer.duration === 0) {
+            const h = parseInt(document.getElementById("hours").value) || 0;
+            const m = parseInt(document.getElementById("minutes").value) || 0;
+            const s = parseInt(document.getElementById("seconds").value) || 0;
+            timer.duration = (h * 3600 + m * 60 + s) * 1000;
+          }
+
+          timer.running = true;
+          timer.endTime = Date.now() + timer.duration;
+
+          timer.interval = setInterval(() => {
+            const remaining = timer.endTime - Date.now();
             if (remaining <= 0) {
-              clearInterval(interval);
-              interval = null;
-              countdown = 0;
-              updateDisplay(0);
+              clearInterval(timer.interval);
+              timer.interval = null;
+              timer.running = false;
+              timer.duration = 0;
+              if (mode === "timer") updateDisplay(0);
               alert("Waktu habis!");
             } else {
-              countdown = remaining;
-              updateDisplay(remaining);
+              timer.duration = remaining;
+              if (mode === "timer") updateDisplay(remaining);
             }
           }, 100);
         }
       }
 
       function pause() {
-        clearInterval(interval);
-        interval = null;
+        if (mode === "stopwatch") {
+          clearInterval(stopwatch.interval);
+          stopwatch.interval = null;
+          stopwatch.running = false;
+        } else {
+          clearInterval(timer.interval);
+          timer.interval = null;
+          timer.running = false;
+        }
       }
 
       function reset() {
-        clearInterval(interval);
-        interval = null;
-        elapsed = 0;
-        countdown = 0;
-        updateDisplay(0);
+        if (mode === "stopwatch") {
+          clearInterval(stopwatch.interval);
+          stopwatch.interval = null;
+          stopwatch.elapsed = 0;
+          stopwatch.running = false;
+          updateDisplay(0);
+        } else {
+          clearInterval(timer.interval);
+          timer.interval = null;
+          timer.duration = 0;
+          timer.running = false;
+          updateDisplay(0);
+        }
       }
 
       function switchMode() {
-        reset();
         if (mode === "stopwatch") {
           mode = "timer";
           btnSwitch.textContent = "Ganti ke Stopwatch";
           timerInput.style.display = "block";
+          updateDisplay(timer.duration);
         } else {
           mode = "stopwatch";
           btnSwitch.textContent = "Ganti ke Timer";
           timerInput.style.display = "none";
+          updateDisplay(stopwatch.elapsed);
         }
       }
 
